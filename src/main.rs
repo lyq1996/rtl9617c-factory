@@ -40,41 +40,41 @@ fn load_env(args: &[String]) -> Result<EnvSet, String> {
 fn run(args: &[String]) -> Result<String, String> {
     match args.first().map(|s| s.as_str()) {
         Some("build") => {
-            let model = arg_value(args, "--model")?;
+            let model = profile::model(&arg_value(args, "--model")?)?;
             let output = arg_value(args, "-o")?;
             let env = load_env(args)?;
             let device = read_file(&arg_value(args, "--device")?)?;
             let image = ubi::parse(&device)?;
-            let extracted = profile::profile(&model)?(&env, &image)?;
+            let extracted = (model.extract)(&env, &image)?;
             let sections = profile::sections(&extracted)?;
-            let generation = std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .map(|d| d.as_secs())
-                .unwrap_or(0);
-            let bin = layout::build(profile::model_id(&model)?, generation, &sections)?;
+            let bin = layout::build(model.image_size, &sections)?;
             std::fs::write(&output, &bin)
                 .map_err(|e| format!("cannot write {output}: {e}"))?;
             let mut report = format!(
                 "factory image: {} ({} bytes) -> {}\n",
-                model,
+                model.name,
                 bin.len(),
                 output
             );
-            for entry in layout::summary(&bin)? {
+            for section in &sections {
+                let spec = layout::field(section.name)?;
                 report.push_str(&format!(
                     "  0x{:06x}  {:<22} size={:<8} crc=0x{:08x}\n",
-                    entry.offset, entry.name, entry.size, entry.crc
+                    spec.offset,
+                    spec.name,
+                    section.data.len(),
+                    crc::zlib(&section.data)
                 ));
             }
             Ok(report)
         }
         Some("dump") => {
-            let model = arg_value(args, "--model")?;
+            let model = profile::model(&arg_value(args, "--model")?)?;
             let env = load_env(args)?;
             let device = read_file(&arg_value(args, "--device")?)?;
             let image = ubi::parse(&device)?;
-            let extracted = profile::profile(&model)?(&env, &image)?;
-            let mut report = format!("model: {} (id {})\n", model, profile::model_id(&model)?);
+            let extracted = (model.extract)(&env, &image)?;
+            let mut report = format!("model: {}\n", model.name);
             report.push_str(&format!(
                 "ubi: peb={} leb={} volumes={:?}\n",
                 image.peb_size,
@@ -116,7 +116,7 @@ fn run(args: &[String]) -> Result<String, String> {
             report.push_str(&format!("sections: {}\n", sections.len()));
             Ok(report)
         }
-        _ => Err("usage: rtl9617c-factory <build|dump> --model <tyfza1|pt1500-h10> --env <file> [--env2 <file>] --device <file> [-o <out.bin>]".into()),
+        _ => Err("usage: rtl9617c-factory <build|dump> --model <tianyi-tyfza1-2p5g|youhua-pt1500-h10-ct-2p5g> --env <file> [--env2 <file>] --device <file> [-o <out.bin>]".into()),
     }
 }
 
@@ -137,12 +137,6 @@ fn main() -> ExitCode {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use layout::IMAGE_SIZE;
-
-    #[test]
-    fn image_size_is_eight_mib() {
-        assert_eq!(IMAGE_SIZE, 8 * 1024 * 1024);
-    }
 
     #[test]
     fn usage_error() {
