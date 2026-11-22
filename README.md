@@ -4,7 +4,7 @@ RTL9617C 平台 Factory 镜像生成工具。从设备备份的 U-Boot env 分�
 
 | model | 设备 | 镜像大小 | 数据源 |
 | --- | --- | --- | --- |
-| `tianyi-tyfza1-2p5g` | 天邑 TYFZA1（Wi-Fi + 下行光 + FPGA） | 8 MiB | `ubi_Config` 卷内 `config_hs.xml` / `config.xml` / `rtkbosa_k.bin` / `rtkoltbosa_k.bin` / `xtemp.cal`，`ubi_fpga` 卷 |
+| `tianyi-tyfza1-2p5g` | 天邑 TYFZA1（Wi-Fi + 下行光 + FPGA） | 8 MiB | `ubi_Config` 卷内 `config_hs.xml` / `config.xml` / `rtkbosa_k.bin` / `rtkoltbosa_k.bin`，`ubi_fpga` 卷 |
 | `youhua-pt1500-h10-ct-2p5g` | 友华 PT1500-H10（无 Wi-Fi / 无下行光） | 64 KiB | U-Boot env `kp_*` keyparam 变量 |
 
 ## 构建
@@ -39,14 +39,13 @@ rtl9617c-factory dump  --model <model> --env <...> [--env2 <...>] --device <...>
 | 偏移 | 容量 | 字段 | 类型 | tianyi-tyfza1-2p5g 来源 | youhua-pt1500-h10-ct-2p5g 来源 |
 | --- | --- | --- | --- | --- | --- |
 | `0x001000` | `0x10` | `BASE_MAC` | 6B MAC + 4B count | `config_hs.xml` `ELAN_MAC_ADDR`，count 固定 3 | env `kp_ucaBaseMacAddr` + `kp_ulNumMacAddrs` |
-| `0x001010` | `0x06` | `EPON_MAC` | 6B MAC | `config.xml` `EPON_LLID_TBL.macAddr`（无则空） | 等于 BASE_MAC |
+| `0x001010` | `0x06` | `EPON_MAC` | 6B MAC | `config.xml` `EPON_LLID_TBL.macAddr`（无则回退 BASE_MAC） | 等于 BASE_MAC |
 | `0x001020` | `0x10` | `PON_SN` | ASCII | `GPON_SN`（12 字符） | env `kp_szXponSN`（12 字符） |
-| `0x001030` | `0x20` | `DEVICE_SN` | ASCII | 区域为 `0xFF` | env `kp_szSerialNumber` |
-| `0x002000` | `0x1000` | `WIFI_CAL_RADIO0` | 二进制（TYFC0003） | 5G `rtl8852ce` 校准组装 | 区域为 `0xFF` |
-| `0x003000` | `0x1000` | `WIFI_CAL_RADIO1` | 二进制（TYFC0003） | 2G `rtl8192xbe` 校准组装 | 区域为 `0xFF` |
-| `0x004000` | `0x0800` | `BOSA_CALIBRATION` | 二进制 | `rtkbosa_k.bin`（1024B） | 区域为 `0xFF` |
-| `0x004800` | `0x0400` | `BOSA_OLT_CALIBRATION` | 二进制 | `rtkoltbosa_k.bin`（588B） | 区域为 `0xFF` |
-| `0x005000` | `0x1000` | `XTEMP_CALIBRATION` | JSON 文本 | `xtemp.cal` | 区域为 `0xFF` |
+| `0x001030` | `0x20` | `DEVICE_SN` | ASCII | 区域为 `0xFF`（无） | env `kp_szSerialNumber` |
+| `0x002000` | `0x1000` | `WIFI_CAL_RADIO0` | 二进制（TYFC0003） | 5G `rtl8852ce` 校准组装 | 区域为 `0xFF`（无） |
+| `0x003000` | `0x1000` | `WIFI_CAL_RADIO1` | 二进制（TYFC0003） | 2G `rtl8192xbe` 校准组装 | 区域为 `0xFF`（无） |
+| `0x004000` | `0x0800` | `BOSA_CALIBRATION` | 二进制 | `rtkbosa_k.bin`（1024B） | 区域为 `0xFF`（无） |
+| `0x004800` | `0x0400` | `BOSA_OLT_CALIBRATION` | 二进制 | `rtkoltbosa_k.bin`（588B） | 区域为 `0xFF`（无） |
 | `0x010000` | `0x7E0000` | `FPGA_IMAGE` | 二进制 | `ubi_fpga` 卷原始内容（fpgafs squashfs，4317184B） | 区域为 `0xFF` |
 
 ### flash-calibration.bin（TYFC0003）

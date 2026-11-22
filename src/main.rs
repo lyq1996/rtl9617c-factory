@@ -103,7 +103,6 @@ fn run(args: &[String]) -> Result<String, String> {
                 ("wifi1", &extracted.wifi1),
                 ("bosa", &extracted.bosa),
                 ("bosa_olt", &extracted.bosa_olt),
-                ("xtemp", &extracted.xtemp),
                 ("fpga", &extracted.fpga),
             ] {
                 report.push_str(&format!(

@@ -13,7 +13,6 @@ pub const FIELDS: &[Field] = &[
     Field { name: "WIFI_CAL_RADIO1", offset: 0x3000, capacity: 0x1000 },
     Field { name: "BOSA_CALIBRATION", offset: 0x4000, capacity: 0x0800 },
     Field { name: "BOSA_OLT_CALIBRATION", offset: 0x4800, capacity: 0x0400 },
-    Field { name: "XTEMP_CALIBRATION", offset: 0x5000, capacity: 0x1000 },
     Field { name: "FPGA_IMAGE", offset: 0x10000, capacity: 0x7E0000 },
 ];
 

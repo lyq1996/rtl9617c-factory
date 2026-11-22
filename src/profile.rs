@@ -20,7 +20,6 @@ pub struct Extracted {
     pub wifi1: Option<Vec<u8>>,
     pub bosa: Option<Vec<u8>>,
     pub bosa_olt: Option<Vec<u8>>,
-    pub xtemp: Option<Vec<u8>>,
     pub fpga: Option<Vec<u8>>,
 }
 
@@ -61,7 +60,7 @@ fn extract_tianyi_tyfza1_2p5g(_env: &EnvSet, device: &UbiImage) -> Result<Extrac
     let pon_sn = optional_field(&hs, "GPON_SN").filter(|v| !v.is_empty());
     let epon_mac = match epon_llid_mac(&cs) {
         Some(value) => Some(parse_mac(&value)?),
-        None => None,
+        None => Some(base_mac),
     };
     let fpga = match device.volumes.get("ubi_fpga") {
         Some(volume) => Some(flat_lebs(volume)),
@@ -79,7 +78,6 @@ fn extract_tianyi_tyfza1_2p5g(_env: &EnvSet, device: &UbiImage) -> Result<Extrac
         wifi1: Some(flash_calibration(&hs, &RADIO1_2G, base_mac)?),
         bosa: files.get("rtkbosa_k.bin").cloned(),
         bosa_olt: files.get("rtkoltbosa_k.bin").cloned(),
-        xtemp: files.get("xtemp.cal").cloned(),
         fpga,
     })
 }
@@ -111,7 +109,6 @@ fn extract_youhua_pt1500_h10_ct_2p5g(env: &EnvSet, device: &UbiImage) -> Result<
         wifi1: None,
         bosa: None,
         bosa_olt: None,
-        xtemp: None,
         fpga: None,
     })
 }
@@ -148,7 +145,6 @@ pub fn sections(extracted: &Extracted) -> Result<Vec<Section>, String> {
         ("WIFI_CAL_RADIO1", &extracted.wifi1),
         ("BOSA_CALIBRATION", &extracted.bosa),
         ("BOSA_OLT_CALIBRATION", &extracted.bosa_olt),
-        ("XTEMP_CALIBRATION", &extracted.xtemp),
     ] {
         if let Some(payload) = data {
             out.push(Section {
